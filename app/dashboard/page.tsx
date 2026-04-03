@@ -12,6 +12,8 @@ export default function Dashboard() {
   const [filteredNews, setFilteredNews] = useState<News[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const router = useRouter();
 
   useEffect(() => {
@@ -29,21 +31,22 @@ export default function Dashboard() {
     }
 
     const fetchNews = async () => {
+      setLoading(true);
       try {
-        const data = await api("/news");
-        // Defensive check: API might return { news: [] }, { data: [] }, or just []
+        const data = await api(`/news?page=${page}&limit=10`);
         const newsArray = data.news || data.data || data;
         setNews(Array.isArray(newsArray) ? newsArray : []);
+        setTotalPages(data.totalPages || 1);
       } catch (err: unknown) {
         console.error("Failed to fetch news", err);
-        setNews([]); // Ensure it stays an array on error
+        setNews([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchNews();
-  }, [router]);
+  }, [router, page]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this news?")) return;
@@ -136,13 +139,15 @@ export default function Dashboard() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
-                        <Image
-                          src={item.imageSrc}
-                          alt=""
-                          width={40}
-                          height={40}
-                          className="w-10 h-10 rounded object-cover shrink-0"
-                        />
+                        {item.imageSrc && (
+                          <Image
+                            src={item.imageSrc}
+                            alt=""
+                            width={40}
+                            height={40}
+                            className="w-10 h-10 rounded object-cover shrink-0"
+                          />
+                        )}
                         <span className="font-medium text-gray-800 line-clamp-1">
                           {item.headline}
                         </span>
@@ -178,7 +183,29 @@ export default function Dashboard() {
                 ))}
               </tbody>
             </table>
-            {news.length === 0 && (
+
+            {/* Pagination Controls */}
+            <div className="flex justify-between items-center px-6 py-4 bg-gray-50 border-t border-gray-200">
+              <button
+                disabled={page === 1}
+                onClick={() => setPage(page - 1)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors shadow-sm"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-600 font-medium">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                disabled={page === totalPages}
+                onClick={() => setPage(page + 1)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors shadow-sm"
+              >
+                Next
+              </button>
+            </div>
+
+            {filteredNews.length === 0 && (
               <div className="p-12 text-center text-gray-500">
                 No news items found.
               </div>
