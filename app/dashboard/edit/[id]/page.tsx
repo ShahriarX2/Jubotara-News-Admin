@@ -335,14 +335,27 @@ export default function EditNews({
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold transition-all disabled:bg-blue-300 shadow-lg shadow-blue-100 mt-4"
-                >
-                  {loading ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                  <span>{loading ? "Saving..." : "Save Changes"}</span>
-                </button>
+                <div className="flex space-x-3 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/dashboard")}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-4 rounded-xl font-bold transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-[2] flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold transition-all disabled:bg-blue-300 shadow-lg shadow-blue-100"
+                  >
+                    {loading ? (
+                      <Loader2 className="animate-spin" size={20} />
+                    ) : (
+                      <Save size={20} />
+                    )}
+                    <span>{loading ? "Saving..." : "Save Changes"}</span>
+                  </button>
+                </div>
               </div>
             </div>
           </form>
