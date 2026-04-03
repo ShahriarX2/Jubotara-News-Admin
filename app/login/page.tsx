@@ -20,7 +20,7 @@ export default function Login() {
 
       if (data.token) {
         localStorage.setItem("token", data.token);
-        // Set cookie for middleware (expires in 7 days)
+        // Set cookie for proxy auth (expires in 7 days)
         document.cookie = `token=${data.token}; path=/; max-age=604800; samesite=lax`;
         router.push("/dashboard");
       } else {
