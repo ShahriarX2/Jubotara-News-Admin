@@ -12,7 +12,15 @@ export interface News {
   content: string;
   category: string | Category;
   imageSrc: string;
+  reporterInfo?: string;
+  imageCaption?: string;
+  status?: string;
+  isFeatured?: boolean;
+  metaTitle?: string;
+  metaDescription?: string;
+  slug?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface User {
