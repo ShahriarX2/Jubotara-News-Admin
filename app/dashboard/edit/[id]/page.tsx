@@ -2,11 +2,15 @@
 import { useState, useEffect, useMemo, use } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Sidebar from "../../../components/Sidebar";
-import { api, Category, News } from "../../lib/api";
+import Sidebar from "@/components/Sidebar";
+import { api, Category, News } from "@/app/lib/api";
 import { Upload, X, Loader2 } from "lucide-react";
 
-export default function EditNews({ params }: { params: Promise<{ id: string }> }) {
+export default function EditNews({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const [headline, setHeadline] = useState("");
   const [content, setContent] = useState("");
@@ -42,15 +46,23 @@ export default function EditNews({ params }: { params: Promise<{ id: string }> }
         // Fetch Categories
         const catData = await api("/category", "GET", undefined, token);
         const categoriesArray = catData.categories || catData.data || catData;
-        setCategories(Array.isArray(categoriesArray) && categoriesArray.length > 0 ? categoriesArray : FALLBACK_CATEGORIES);
+        setCategories(
+          Array.isArray(categoriesArray) && categoriesArray.length > 0
+            ? categoriesArray
+            : FALLBACK_CATEGORIES,
+        );
 
         // Fetch News Item
         const res = await api(`/news/${id}`, "GET", undefined, token);
         const newsItem: News = res.data || res;
-        
+
         setHeadline(newsItem.headline);
         setContent(newsItem.content);
-        setCategoryId(typeof newsItem.category === 'string' ? newsItem.category : (newsItem.category as Category)._id);
+        setCategoryId(
+          typeof newsItem.category === "string"
+            ? newsItem.category
+            : (newsItem.category as Category)._id,
+        );
         if (newsItem.imageSrc) setPreview(newsItem.imageSrc);
       } catch (err) {
         console.error("Failed to fetch data", err);
@@ -117,9 +129,14 @@ export default function EditNews({ params }: { params: Promise<{ id: string }> }
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-800 mb-8">Edit Post</h1>
 
-          <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 space-y-6">
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 space-y-6"
+          >
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Headline</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Headline
+              </label>
               <input
                 required
                 className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 bg-white"
@@ -131,7 +148,9 @@ export default function EditNews({ params }: { params: Promise<{ id: string }> }
 
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Category
+                </label>
                 <select
                   required
                   className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white text-gray-900"
@@ -148,15 +167,24 @@ export default function EditNews({ params }: { params: Promise<{ id: string }> }
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Cover Image</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Cover Image
+                </label>
                 <div className="relative w-full h-32">
                   {!preview ? (
                     <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                        <p className="text-sm text-gray-500">Click to upload image</p>
+                        <p className="text-sm text-gray-500">
+                          Click to upload image
+                        </p>
                       </div>
-                      <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                      />
                     </label>
                   ) : (
                     <div className="relative w-full h-full">
@@ -168,7 +196,10 @@ export default function EditNews({ params }: { params: Promise<{ id: string }> }
                       />
                       <button
                         type="button"
-                        onClick={() => { setPreview(null); setImage(null); }}
+                        onClick={() => {
+                          setPreview(null);
+                          setImage(null);
+                        }}
                         className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                       >
                         <X size={16} />
@@ -180,7 +211,9 @@ export default function EditNews({ params }: { params: Promise<{ id: string }> }
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Content</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Content
+              </label>
               <textarea
                 required
                 rows={10}

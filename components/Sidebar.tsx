@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, PlusCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, PlusCircle, LogOut, User } from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -20,7 +20,9 @@ export default function Sidebar() {
   return (
     <div className="w-64 h-screen bg-gray-900 text-gray-100 flex flex-col fixed left-0 top-0">
       <div className="p-6 border-b border-gray-800">
-        <h2 className="text-xl font-bold text-white tracking-tight">Jubotara Admin</h2>
+        <h2 className="text-xl font-bold text-white tracking-tight">
+          Jubotara Admin
+        </h2>
       </div>
 
       <nav className="flex-1 p-4 space-y-2">
@@ -41,6 +43,10 @@ export default function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-gray-800">
+        <div className="flex items-center space-x-3 p-3 mb-2 text-gray-400">
+          <User size={20} />
+          <span className="text-sm font-medium">Admin User</span>
+        </div>
         <button
           onClick={handleLogout}
           className="flex items-center space-x-3 w-full p-3 rounded-lg hover:bg-red-900/30 text-red-400 transition-colors"

@@ -68,13 +68,40 @@ export default function Dashboard() {
             <input
               type="text"
               placeholder="Search by headline..."
-              className="px-4 py-2 border rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <div className="text-sm text-gray-500">
-              Total News: {news.length}
-            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <p className="text-sm font-medium text-gray-500 mb-1">Total News</p>
+            <h3 className="text-2xl font-bold text-gray-800">{news.length}</h3>
+          </div>
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <p className="text-sm font-medium text-gray-500 mb-1">
+              Recent (7 Days)
+            </p>
+            <h3 className="text-2xl font-bold text-gray-800">
+              {
+                news.filter(
+                  (n) =>
+                    new Date(n.createdAt) >
+                    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                ).length
+              }
+            </h3>
+          </div>
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <p className="text-sm font-medium text-gray-500 mb-1">
+              Active Categories
+            </p>
+            <h3 className="text-2xl font-bold text-gray-800">
+              {new Set(news.map((n) => (typeof n.category === "object" ? n.category.name : n.category))).size}
+            </h3>
           </div>
         </div>
 
