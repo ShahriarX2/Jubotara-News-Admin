@@ -15,6 +15,14 @@ export interface News {
   createdAt: string;
 }
 
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+}
+
 export const api = async (
   endpoint: string,
   method: string = "GET",
