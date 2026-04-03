@@ -5,11 +5,21 @@ import { api, News } from "../lib/api";
 import { useRouter } from "next/navigation";
 import { Trash2, Edit } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Dashboard() {
   const [news, setNews] = useState<News[]>([]);
+  const [filteredNews, setFilteredNews] = useState<News[]>([]);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    const results = news.filter((item) =>
+      item.headline.toLowerCase().includes(search.toLowerCase())
+    );
+    setFilteredNews(results);
+  }, [search, news]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -54,7 +64,18 @@ export default function Dashboard() {
       <main className="ml-64 p-8 w-full">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">News Dashboard</h1>
-          <div className="text-sm text-gray-500">Total News: {news.length}</div>
+          <div className="flex items-center space-x-4">
+            <input
+              type="text"
+              placeholder="Search by headline..."
+              className="px-4 py-2 border rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <div className="text-sm text-gray-500">
+              Total News: {news.length}
+            </div>
+          </div>
         </div>
 
         {loading ? (
@@ -81,7 +102,7 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {news.map((item) => (
+                {filteredNews.map((item) => (
                   <tr
                     key={item._id}
                     className="hover:bg-gray-50 transition-colors"
@@ -110,12 +131,13 @@ export default function Dashboard() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-3">
-                        <button
+                        <Link
+                          href={`/dashboard/edit/${item._id}`}
                           title="Edit"
                           className="text-blue-600 hover:text-blue-800 transition-colors"
                         >
                           <Edit size={18} />
-                        </button>
+                        </Link>
                         <button
                           onClick={() => handleDelete(item._id)}
                           title="Delete"
