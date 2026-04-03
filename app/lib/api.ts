@@ -23,6 +23,16 @@ export interface User {
   createdAt: string;
 }
 
+export interface TeamMember {
+  _id: string;
+  name: string;
+  designation: string;
+  image: string;
+  section: string;
+  isHead: boolean;
+  order: number;
+}
+
 export const api = async (
   endpoint: string,
   method: string = "GET",
