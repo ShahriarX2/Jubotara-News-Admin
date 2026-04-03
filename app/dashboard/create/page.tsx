@@ -41,6 +41,7 @@ export default function CreateNews() {
       try {
         const data = await api("/category", "GET", undefined, token || "");
         const categoriesArray = data.categories || data.data || data;
+
         if (Array.isArray(categoriesArray) && categoriesArray.length > 0) {
           setCategories(categoriesArray);
         } else {
