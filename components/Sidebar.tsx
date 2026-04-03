@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, PlusCircle, LogOut, User, FolderTree, Users } from "lucide-react";
+import { LayoutDashboard, PlusCircle, LogOut, User, FolderTree, Users, BarChart3, Settings } from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -11,6 +11,8 @@ export default function Sidebar() {
     { name: "Create News", href: "/dashboard/create", icon: PlusCircle },
     { name: "Categories", href: "/dashboard/categories", icon: FolderTree },
     { name: "Users", href: "/dashboard/users", icon: Users },
+    { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+    { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ];
 
   const handleLogout = () => {
