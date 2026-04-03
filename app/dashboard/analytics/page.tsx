@@ -1,24 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
-import Sidebar from "../../../components/Sidebar";
-import { api, News, Category, User } from "../../lib/api";
-import { useRouter } from "next/navigation";
-import { BarChart3, TrendingUp, PieChart, Users, Loader2 } from "lucide-react";
+import { api, News, User } from "../../lib/api";
+import { BarChart3, TrendingUp, PieChart, Users } from "lucide-react";
+import { ErrorState, LoadingState } from "@/components/DashboardState";
+import { DashboardPage } from "@/components/DashboardShell";
 
 export default function AnalyticsPage() {
   const [news, setNews] = useState<News[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
     const fetchData = async () => {
+      setError(null);
       try {
         const [newsData, usersData] = await Promise.all([
           api("/news?limit=100"), // Get more items for better analytics
@@ -29,13 +24,14 @@ export default function AnalyticsPage() {
         setUsers(usersData.users || usersData.data || usersData || []);
       } catch (err) {
         console.error("Failed to fetch analytics data", err);
+        setError("Unable to load analytics data right now.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [router]);
+  }, []);
 
   // Calculate distributions
   const categoryStats = news.reduce((acc: Record<string, number>, curr) => {
@@ -67,34 +63,39 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex bg-gray-50 min-h-screen text-gray-900">
-        <Sidebar />
-        <main className="ml-64 p-8 w-full flex justify-center items-center">
-          <Loader2 className="animate-spin text-blue-600" size={48} />
-        </main>
-      </div>
+      <DashboardPage>
+          <LoadingState label="Loading analytics..." />
+      </DashboardPage>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardPage>
+          <ErrorState
+            title="Could not load analytics"
+            description={error}
+          />
+      </DashboardPage>
     );
   }
 
   return (
-    <div className="flex bg-gray-50 min-h-screen text-gray-900">
-      <Sidebar />
-
-      <main className="ml-64 p-8 w-full">
-        <div className="flex items-center space-x-3 mb-8">
+    <DashboardPage>
+        <div className="mb-8 flex items-center space-x-3">
           <BarChart3 className="text-blue-600" size={32} />
           <h1 className="text-3xl font-bold text-gray-800">Analytics Overview</h1>
         </div>
 
         {/* Top level stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard icon={<TrendingUp size={20}/>} label="Total Posts" value={news.length} color="blue" />
           <StatCard icon={<Users size={20}/>} label="Team Members" value={users.length} color="purple" />
           <StatCard icon={<PieChart size={20}/>} label="Categories" value={sortedCategories.length} color="green" />
           <StatCard icon={<BarChart3 size={20}/>} label="Avg Posts/Day" value={(news.length / 30).toFixed(1)} color="orange" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
           {/* Category Distribution Chart */}
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <h3 className="text-lg font-bold text-gray-800 mb-6">Posts by Category</h3>
@@ -138,8 +139,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </DashboardPage>
   );
 }
 

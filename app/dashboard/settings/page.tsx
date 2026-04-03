@@ -1,17 +1,23 @@
 "use client";
 import { useState } from "react";
-import Sidebar from "../../../components/Sidebar";
 import { Settings, Globe, Share2, ShieldCheck, Save, Loader2 } from "lucide-react";
+import { useFeedback } from "@/components/FeedbackProvider";
+import { DashboardPage } from "@/components/DashboardShell";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general");
   const [saving, setSaving] = useState(false);
+  const { showToast } = useFeedback();
 
   const handleSave = () => {
     setSaving(true);
     setTimeout(() => {
       setSaving(false);
-      alert("Settings saved successfully (Simulated)");
+      showToast({
+        title: "Settings saved",
+        description: "Simulated save completed successfully.",
+        variant: "success",
+      });
     }, 1000);
   };
 
@@ -22,11 +28,8 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="flex bg-gray-50 min-h-screen text-gray-900">
-      <Sidebar />
-
-      <main className="ml-64 p-8 w-full">
-        <div className="flex justify-between items-center mb-8">
+    <DashboardPage className="text-gray-900">
+        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center space-x-3">
             <Settings className="text-blue-600" size={32} />
             <h1 className="text-3xl font-bold text-gray-800">Site Settings</h1>
@@ -41,9 +44,9 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        <div className="flex space-x-8">
+        <div className="flex flex-col gap-6 xl:flex-row xl:gap-8">
           {/* Tabs Sidebar */}
-          <div className="w-64 space-y-1">
+          <div className="grid grid-cols-1 gap-1 sm:grid-cols-3 xl:w-64 xl:grid-cols-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -61,7 +64,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Form Content */}
-          <div className="flex-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-8 max-w-3xl">
+          <div className="max-w-3xl flex-1 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
             {activeTab === "general" && (
               <div className="space-y-6">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">General Configuration</h3>
@@ -120,7 +123,6 @@ export default function SettingsPage() {
             )}
           </div>
         </div>
-      </main>
-    </div>
+    </DashboardPage>
   );
 }

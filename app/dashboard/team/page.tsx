@@ -1,10 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
-import Sidebar from "../../../components/Sidebar";
 import { api, TeamMember } from "../../lib/api";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Trash2, Edit, Plus, Loader2, X, Upload, Award } from "lucide-react";
+import { useFeedback } from "@/components/FeedbackProvider";
+import { EmptyState, ErrorState, LoadingState } from "@/components/DashboardState";
+import { DashboardPage } from "@/components/DashboardShell";
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
 
 export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -12,6 +16,7 @@ export default function TeamPage() {
   const [submitting, setSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   const [name, setName] = useState("");
   const [designation, setDesignation] = useState("");
@@ -20,29 +25,25 @@ export default function TeamPage() {
   const [order, setOrder] = useState(0);
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  
-  const router = useRouter();
+  const { confirm, showToast } = useFeedback();
 
   const fetchMembers = async () => {
+    setError(null);
     try {
       const data = await api("/team");
       const membersArray = data.members || data.data || data;
       setMembers(Array.isArray(membersArray) ? membersArray : []);
     } catch (err) {
       console.error("Failed to fetch team members", err);
+      setError("Unable to load team members right now.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
     fetchMembers();
-  }, [router]);
+  }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -80,8 +81,16 @@ export default function TeamPage() {
       setShowModal(false);
       resetForm();
       fetchMembers();
-    } catch (err: any) {
-      alert(err.message || "Operation failed");
+      showToast({
+        title: editingMember ? "Team member updated" : "Team member added",
+        variant: "success",
+      });
+    } catch (error: unknown) {
+      showToast({
+        title: "Operation failed",
+        description: getErrorMessage(error, "Operation failed"),
+        variant: "error",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -110,22 +119,28 @@ export default function TeamPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this team member?")) return;
+    const confirmed = await confirm({
+      title: "Delete this team member?",
+      description: "This member will be removed from the team listing.",
+      confirmText: "Delete",
+      variant: "danger",
+    });
+
+    if (!confirmed) return;
     const token = localStorage.getItem("token");
     try {
       await api(`/team/${id}`, "DELETE", undefined, token || "");
       fetchMembers();
-    } catch (err) {
-      alert("Failed to delete member");
+      showToast({ title: "Team member deleted", variant: "success" });
+    } catch {
+      showToast({ title: "Failed to delete member", variant: "error" });
     }
   };
 
   return (
-    <div className="flex bg-gray-50 min-h-screen text-gray-900">
-      <Sidebar />
-
-      <main className="ml-64 p-8 w-full">
-        <div className="flex justify-between items-center mb-8">
+    <>
+      <DashboardPage className="text-gray-900">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Team Management</h1>
             <p className="text-gray-500 mt-1">Manage your newsroom staff and hierarchy.</p>
@@ -143,16 +158,25 @@ export default function TeamPage() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center p-20">
-            <Loader2 className="animate-spin text-blue-600" size={48} />
-          </div>
+          <LoadingState label="Loading team members..." />
+        ) : error ? (
+          <ErrorState
+            title="Could not load team members"
+            description={error}
+            onRetry={fetchMembers}
+          />
+        ) : members.length === 0 ? (
+          <EmptyState
+            title="No team members found"
+            description="Add your newsroom staff to start building the public team page."
+          />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {members.sort((a,b) => a.order - b.order).map((member) => (
               <div key={member._id} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                 <div className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex min-w-0 items-center space-x-4">
                       <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 flex-shrink-0">
                         {member.image ? (
                           <Image src={member.image} alt={member.name} fill className="object-cover" />
@@ -165,10 +189,10 @@ export default function TeamPage() {
                       <div>
                         <div className="flex items-center space-x-2">
                           <h3 className="font-bold text-gray-900 line-clamp-1">{member.name}</h3>
-                          {member.isHead && <Award size={16} className="text-amber-500" title="Section Head" />}
+                          {member.isHead && <Award size={16} className="text-amber-500" />}
                         </div>
-                        <p className="text-sm text-blue-600 font-medium">{member.designation}</p>
-                        <p className="text-xs text-gray-500 mt-1 bg-gray-100 px-2 py-0.5 rounded-full inline-block">{member.section}</p>
+                        <p className="text-sm text-blue-600 font-medium break-words">{member.designation}</p>
+                        <p className="mt-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">{member.section}</p>
                       </div>
                     </div>
                     <div className="flex flex-col space-y-2">
@@ -188,12 +212,7 @@ export default function TeamPage() {
             ))}
           </div>
         )}
-        {!loading && members.length === 0 && (
-          <div className="p-20 text-center bg-white rounded-2xl border-2 border-dashed border-gray-200">
-            <p className="text-gray-500">No team members found. Start by adding one!</p>
-          </div>
-        )}
-      </main>
+      </DashboardPage>
 
       {/* Modal */}
       {showModal && (
@@ -274,6 +293,6 @@ export default function TeamPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

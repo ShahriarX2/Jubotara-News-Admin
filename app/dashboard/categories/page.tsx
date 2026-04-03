@@ -1,9 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
-import Sidebar from "../../../components/Sidebar";
 import { api, Category } from "../../lib/api";
-import { useRouter } from "next/navigation";
 import { Trash2, Edit, Plus, Loader2, X } from "lucide-react";
+import { useFeedback } from "@/components/FeedbackProvider";
+import { EmptyState, ErrorState, LoadingState } from "@/components/DashboardState";
+import { DashboardPage } from "@/components/DashboardShell";
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -13,28 +17,26 @@ export default function CategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
-  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const { confirm, showToast } = useFeedback();
 
   const fetchCategories = async () => {
+    setError(null);
     try {
       const data = await api("/category");
       const categoriesArray = data.categories || data.data || data;
       setCategories(Array.isArray(categoriesArray) ? categoriesArray : []);
     } catch (err) {
       console.error("Failed to fetch categories", err);
+      setError("Unable to load categories right now.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
     fetchCategories();
-  }, [router]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,8 +54,16 @@ export default function CategoriesPage() {
       setSlug("");
       setEditingCategory(null);
       fetchCategories();
-    } catch (err: any) {
-      alert(err.message || "Failed to save category");
+      showToast({
+        title: editingCategory ? "Category updated" : "Category created",
+        variant: "success",
+      });
+    } catch (error: unknown) {
+      showToast({
+        title: "Failed to save category",
+        description: getErrorMessage(error, "Failed to save category"),
+        variant: "error",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -67,22 +77,28 @@ export default function CategoriesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this category?")) return;
+    const confirmed = await confirm({
+      title: "Delete this category?",
+      description: "Any news assigned to it may be affected.",
+      confirmText: "Delete",
+      variant: "danger",
+    });
+
+    if (!confirmed) return;
     const token = localStorage.getItem("token");
     try {
       await api(`/category/${id}`, "DELETE", undefined, token || "");
       fetchCategories();
-    } catch (err) {
-      alert("Failed to delete category");
+      showToast({ title: "Category deleted", variant: "success" });
+    } catch {
+      showToast({ title: "Failed to delete category", variant: "error" });
     }
   };
 
   return (
-    <div className="flex bg-gray-50 min-h-screen">
-      <Sidebar />
-
-      <main className="ml-64 p-8 w-full text-gray-900">
-        <div className="flex justify-between items-center mb-8">
+    <>
+      <DashboardPage className="text-gray-900">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold text-gray-800">Categories</h1>
           <button
             onClick={() => {
@@ -99,12 +115,22 @@ export default function CategoriesPage() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center p-20">
-            <Loader2 className="animate-spin text-blue-600" size={48} />
-          </div>
+          <LoadingState label="Loading categories..." />
+        ) : error ? (
+          <ErrorState
+            title="Could not load categories"
+            description={error}
+            onRetry={fetchCategories}
+          />
+        ) : categories.length === 0 ? (
+          <EmptyState
+            title="No categories found"
+            description="Create a category to organize your news posts."
+          />
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden max-w-4xl">
-            <table className="w-full text-left">
+          <div className="max-w-4xl overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="min-w-[560px] w-full text-left">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-4 text-sm font-semibold text-gray-600 uppercase">Name</th>
@@ -136,13 +162,11 @@ export default function CategoriesPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
-            {categories.length === 0 && (
-              <div className="p-12 text-center text-gray-500">No categories found.</div>
-            )}
+              </table>
+            </div>
           </div>
         )}
-      </main>
+      </DashboardPage>
 
       {/* Modal */}
       {showModal && (
@@ -194,6 +218,6 @@ export default function CategoriesPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

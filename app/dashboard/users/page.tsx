@@ -1,9 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
-import Sidebar from "../../../components/Sidebar";
 import { api, User } from "../../lib/api";
-import { useRouter } from "next/navigation";
 import { Trash2, Edit, Plus, Loader2, X, UserCog } from "lucide-react";
+import { useFeedback } from "@/components/FeedbackProvider";
+import { EmptyState, ErrorState, LoadingState } from "@/components/DashboardState";
+import { DashboardPage } from "@/components/DashboardShell";
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -11,24 +15,28 @@ export default function UsersPage() {
   const [submitting, setSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("reporter");
-  
-  const router = useRouter();
+  const { confirm, showToast } = useFeedback();
 
   const fetchUsers = async () => {
     const token = localStorage.getItem("token");
+    setError(null);
     try {
       const data = await api("/users", "GET", undefined, token || "");
       const usersArray = data.users || data.data || data;
       setUsers(Array.isArray(usersArray) ? usersArray : []);
-    } catch (err: any) {
-      console.error("Failed to fetch users", err);
-      if (err.message.includes("401") || err.message.includes("403")) {
-        // Potentially restricted to Super Admin
+    } catch (error: unknown) {
+      console.error("Failed to fetch users", error);
+      const message = getErrorMessage(error, "");
+      if (message.includes("401") || message.includes("403")) {
+        setError("You do not have permission to view users.");
+      } else {
+        setError("Unable to load users right now.");
       }
     } finally {
       setLoading(false);
@@ -36,13 +44,8 @@ export default function UsersPage() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
     fetchUsers();
-  }, [router]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,8 +61,16 @@ export default function UsersPage() {
       setShowModal(false);
       resetForm();
       fetchUsers();
-    } catch (err: any) {
-      alert(err.message || "Operation failed");
+      showToast({
+        title: editingUser ? "User updated" : "User created",
+        variant: "success",
+      });
+    } catch (error: unknown) {
+      showToast({
+        title: "Operation failed",
+        description: getErrorMessage(error, "Operation failed"),
+        variant: "error",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -82,22 +93,28 @@ export default function UsersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+    const confirmed = await confirm({
+      title: "Delete this user?",
+      description: "This will permanently remove the account.",
+      confirmText: "Delete",
+      variant: "danger",
+    });
+
+    if (!confirmed) return;
     const token = localStorage.getItem("token");
     try {
       await api(`/users/${id}`, "DELETE", undefined, token || "");
       fetchUsers();
-    } catch (err) {
-      alert("Failed to delete user");
+      showToast({ title: "User deleted", variant: "success" });
+    } catch {
+      showToast({ title: "Failed to delete user", variant: "error" });
     }
   };
 
   return (
-    <div className="flex bg-gray-50 min-h-screen">
-      <Sidebar />
-
-      <main className="ml-64 p-8 w-full text-gray-900">
-        <div className="flex justify-between items-center mb-8">
+    <>
+      <DashboardPage className="text-gray-900">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
           <button
             onClick={() => {
@@ -112,12 +129,22 @@ export default function UsersPage() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center p-20">
-            <Loader2 className="animate-spin text-blue-600" size={48} />
-          </div>
+          <LoadingState label="Loading users..." />
+        ) : error ? (
+          <ErrorState
+            title="Could not load users"
+            description={error}
+            onRetry={fetchUsers}
+          />
+        ) : users.length === 0 ? (
+          <EmptyState
+            title="No users found"
+            description="Create user accounts to manage access for your newsroom team."
+          />
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <table className="w-full text-left">
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="min-w-[720px] w-full text-left">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-4 text-sm font-semibold text-gray-600 uppercase">User</th>
@@ -171,15 +198,11 @@ export default function UsersPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
-            {users.length === 0 && (
-              <div className="p-12 text-center text-gray-500">
-                No users found or access restricted.
-              </div>
-            )}
+              </table>
+            </div>
           </div>
         )}
-      </main>
+      </DashboardPage>
 
       {/* Modal */}
       {showModal && (
@@ -254,6 +277,6 @@ export default function UsersPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

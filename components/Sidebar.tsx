@@ -1,10 +1,24 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, PlusCircle, LogOut, User, FolderTree, Users, BarChart3, Settings, Contact2 } from "lucide-react";
+import {
+  LayoutDashboard,
+  PlusCircle,
+  LogOut,
+  User,
+  FolderTree,
+  Users,
+  BarChart3,
+  Settings,
+  Contact2,
+  Menu,
+  X,
+} from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -22,23 +36,34 @@ export default function Sidebar() {
     window.location.href = "/login";
   };
 
-  return (
-    <div className="w-64 h-screen bg-gray-900 text-gray-100 flex flex-col fixed left-0 top-0">
-      <div className="p-6 border-b border-gray-800">
-        <h2 className="text-xl font-bold text-white tracking-tight">
-          Jubotara Admin
-        </h2>
+  const navContent = (
+    <>
+      <div className="border-b border-gray-800 p-6">
+        <div className="flex items-center justify-between lg:block">
+          <h2 className="text-xl font-bold tracking-tight text-white">
+            Jubotara Admin
+          </h2>
+          <button
+            type="button"
+            title="Close menu"
+            onClick={() => setIsOpen(false)}
+            className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-800 hover:text-white lg:hidden"
+          >
+            <X size={20} />
+          </button>
+        </div>
       </div>
 
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 space-y-2 p-4">
         {navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+            onClick={() => setIsOpen(false)}
+            className={`flex items-center space-x-3 rounded-lg p-3 transition-colors ${
               pathname === item.href
                 ? "bg-blue-600 text-white"
-                : "hover:bg-gray-800 text-gray-400"
+                : "text-gray-400 hover:bg-gray-800"
             }`}
           >
             <item.icon size={20} />
@@ -47,19 +72,53 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div className="p-4 border-t border-gray-800">
-        <div className="flex items-center space-x-3 p-3 mb-2 text-gray-400">
+      <div className="border-t border-gray-800 p-4">
+        <div className="mb-2 flex items-center space-x-3 p-3 text-gray-400">
           <User size={20} />
           <span className="text-sm font-medium">Admin User</span>
         </div>
         <button
           onClick={handleLogout}
-          className="flex items-center space-x-3 w-full p-3 rounded-lg hover:bg-red-900/30 text-red-400 transition-colors"
+          className="flex w-full items-center space-x-3 rounded-lg p-3 text-red-400 transition-colors hover:bg-red-900/30"
         >
           <LogOut size={20} />
           <span className="font-medium">Logout</span>
         </button>
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 shadow-sm lg:hidden">
+        <button
+          type="button"
+          title="Open menu"
+          onClick={() => setIsOpen(true)}
+          className="rounded-lg p-2 text-gray-700 transition hover:bg-gray-100"
+        >
+          <Menu size={22} />
+        </button>
+        <h2 className="text-lg font-bold text-gray-900">Jubotara Admin</h2>
+        <div className="w-10" />
+      </header>
+
+      {isOpen ? (
+        <button
+          type="button"
+          aria-label="Close menu overlay"
+          onClick={() => setIsOpen(false)}
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+        />
+      ) : null}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-gray-900 text-gray-100 transition-transform lg:z-20 lg:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {navContent}
+      </aside>
+    </>
   );
 }

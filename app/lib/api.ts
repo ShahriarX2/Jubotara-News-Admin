@@ -20,6 +20,7 @@ export interface News {
   metaDescription?: string;
   slug?: string;
   createdAt: string;
+  publishedAt?: string;
   updatedAt?: string;
 }
 

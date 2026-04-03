@@ -1,10 +1,11 @@
 "use client";
 import { useState, useEffect, useMemo, use } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import Sidebar from "../../../../components/Sidebar";
-import { api, Category, News } from "../../../lib/api";
-import { Upload, X, Loader2, Save } from "lucide-react";
+import { api, Category, News } from "@/app/lib/api";
+import { Loader2 } from "lucide-react";
+import { useFeedback } from "@/components/FeedbackProvider";
+import { DashboardPage } from "@/components/DashboardShell";
+import NewsForm from "@/components/NewsForm";
 
 export default function EditNews({
   params,
@@ -14,22 +15,22 @@ export default function EditNews({
   const { id } = use(params);
   const [headline, setHeadline] = useState("");
   const [content, setContent] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [category, setCategory] = useState("");
   const [reporterInfo, setReporterInfo] = useState("");
   const [imageCaption, setImageCaption] = useState("");
   const [status, setStatus] = useState("published");
   const [isFeatured, setIsFeatured] = useState(false);
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
-
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(true);
   const router = useRouter();
+  const { showToast } = useFeedback();
 
-  const FALLBACK_CATEGORIES = useMemo<Category[]>(
+  const fallbackCategories = useMemo<Category[]>(
     () => [
       { _id: "সারাদেশ", name: "সারাদেশ", slug: "all-country" },
       { _id: "রাজনীতি", name: "রাজনীতি", slug: "politics" },
@@ -43,29 +44,25 @@ export default function EditNews({
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
 
     const fetchData = async () => {
       try {
-        // Fetch Categories
-        const catData = await api("/category", "GET", undefined, token);
-        const categoriesArray = catData.categories || catData.data || catData;
+        const categoryData = await api("/category", "GET", undefined, token || "");
+        const categoriesArray =
+          categoryData.categories || categoryData.data || categoryData;
+
         setCategories(
           Array.isArray(categoriesArray) && categoriesArray.length > 0
             ? categoriesArray
-            : FALLBACK_CATEGORIES,
+            : fallbackCategories,
         );
 
-        // Fetch News Item
-        const res = await api(`/news/${id}`, "GET", undefined, token);
-        const newsItem: News = res.data || res;
+        const response = await api(`/news/${id}`, "GET", undefined, token || "");
+        const newsItem: News = response.data || response;
 
         setHeadline(newsItem.headline || "");
         setContent(newsItem.content || "");
-        setCategoryId(
+        setCategory(
           typeof newsItem.category === "string"
             ? newsItem.category
             : (newsItem.category as Category)?._id || "",
@@ -76,40 +73,47 @@ export default function EditNews({
         setIsFeatured(!!newsItem.isFeatured);
         setMetaTitle(newsItem.metaTitle || "");
         setMetaDescription(newsItem.metaDescription || "");
-        
-        if (newsItem.imageSrc) setPreview(newsItem.imageSrc);
-      } catch (err) {
-        console.error("Failed to fetch data", err);
-        alert("Failed to load news data");
+
+        if (newsItem.imageSrc) {
+          setPreview(newsItem.imageSrc);
+        }
+      } catch (error) {
+        console.error("Failed to fetch data", error);
+        showToast({
+          title: "Failed to load news data",
+          variant: "error",
+        });
       } finally {
         setFetchingData(false);
       }
     };
 
-    fetchData();
-  }, [id, router, FALLBACK_CATEGORIES]);
+    void fetchData();
+  }, [id, router, fallbackCategories, showToast]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
     }
+
+    setImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setLoading(true);
 
     const token = localStorage.getItem("token");
     const formData = new FormData();
     formData.append("headline", headline);
     formData.append("content", content);
-    formData.append("category", categoryId);
+    formData.append("category", category);
     formData.append("reporterInfo", reporterInfo);
     formData.append("imageCaption", imageCaption);
     formData.append("status", status);
@@ -123,9 +127,14 @@ export default function EditNews({
 
     try {
       await api(`/news/${id}`, "PATCH", formData, token || "");
+      showToast({ title: "News updated", variant: "success" });
       router.push("/dashboard");
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed to update news");
+    } catch (error: unknown) {
+      showToast({
+        title: "Failed to update news",
+        description: error instanceof Error ? error.message : "Failed to update news",
+        variant: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -133,234 +142,48 @@ export default function EditNews({
 
   if (fetchingData) {
     return (
-      <div className="flex bg-gray-50 min-h-screen">
-        <Sidebar />
-        <main className="ml-64 p-8 w-full flex justify-center items-center">
+      <DashboardPage className="flex min-h-[calc(100vh-64px)] items-center justify-center lg:min-h-screen">
           <Loader2 className="animate-spin text-blue-600" size={48} />
-        </main>
-      </div>
+      </DashboardPage>
     );
   }
 
   return (
-    <div className="flex bg-gray-50 min-h-screen text-gray-900">
-      <Sidebar />
-
-      <main className="ml-64 p-8 w-full">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-800 mb-8">
-            Edit Post
-          </h1>
-
-          <form
+    <DashboardPage className="text-gray-900">
+        <div className="mx-auto max-w-5xl">
+          <h1 className="mb-8 text-3xl font-bold text-gray-800">Edit Post</h1>
+          <NewsForm
+            mode="edit"
+            headline={headline}
+            content={content}
+            category={category}
+            reporterInfo={reporterInfo}
+            imageCaption={imageCaption}
+            status={status}
+            isFeatured={isFeatured}
+            metaTitle={metaTitle}
+            metaDescription={metaDescription}
+            preview={preview}
+            categories={categories}
+            loading={loading}
+            onHeadlineChange={setHeadline}
+            onContentChange={setContent}
+            onCategoryChange={setCategory}
+            onReporterInfoChange={setReporterInfo}
+            onImageCaptionChange={setImageCaption}
+            onStatusChange={setStatus}
+            onIsFeaturedChange={setIsFeatured}
+            onMetaTitleChange={setMetaTitle}
+            onMetaDescriptionChange={setMetaDescription}
+            onImageChange={handleImageChange}
+            onRemoveImage={() => {
+              setPreview(null);
+              setImage(null);
+            }}
+            onCancel={() => router.push("/dashboard")}
             onSubmit={handleSubmit}
-            className="space-y-8"
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Left Column: Main Content */}
-              <div className="lg:col-span-2 space-y-6">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Headline
-                    </label>
-                    <input
-                      required
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 bg-white"
-                      placeholder="Enter news headline..."
-                      value={headline}
-                      onChange={(e) => setHeadline(e.target.value)}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Content
-                    </label>
-                    <textarea
-                      required
-                      rows={15}
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 bg-white"
-                      placeholder="Write your content here..."
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* SEO Settings */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
-                  <h3 className="text-lg font-bold text-gray-800 border-b pb-2">SEO Settings</h3>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Meta Title
-                    </label>
-                    <input
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 bg-white"
-                      placeholder="SEO Title"
-                      value={metaTitle}
-                      onChange={(e) => setMetaTitle(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Meta Description
-                    </label>
-                    <textarea
-                      rows={3}
-                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-900 bg-white"
-                      placeholder="Short description for search engines..."
-                      value={metaDescription}
-                      onChange={(e) => setMetaDescription(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column: Sidebar Options */}
-              <div className="space-y-6">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
-                  <h3 className="text-lg font-bold text-gray-800 border-b pb-2">Publish Options</h3>
-                  
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Status
-                    </label>
-                    <select
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-900"
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value)}
-                    >
-                      <option value="published">Published</option>
-                      <option value="draft">Draft</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="checkbox" 
-                      id="isFeatured"
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                      checked={isFeatured}
-                      onChange={(e) => setIsFeatured(e.target.checked)}
-                    />
-                    <label htmlFor="isFeatured" className="text-sm font-semibold text-gray-700 cursor-pointer">
-                      Featured Post
-                    </label>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Category
-                    </label>
-                    <select
-                      required
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-900"
-                      value={categoryId}
-                      onChange={(e) => setCategoryId(e.target.value)}
-                    >
-                      <option value="">Select Category</option>
-                      {categories.map((cat) => (
-                        <option key={cat._id} value={cat._id}>
-                          {cat.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Reporter Info
-                    </label>
-                    <input
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-900"
-                      placeholder="e.g., নিজস্ব প্রতিবেদক"
-                      value={reporterInfo}
-                      onChange={(e) => setReporterInfo(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
-                  <h3 className="text-lg font-bold text-gray-800 border-b pb-2">Media</h3>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Featured Image
-                    </label>
-                    <div className="relative w-full aspect-video">
-                      {!preview ? (
-                        <label className="flex flex-col items-center justify-center w-full h-full border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                          <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                          <p className="text-xs text-gray-500 text-center px-2">Click to upload image</p>
-                          <input
-                            type="file"
-                            className="hidden"
-                            accept="image/*"
-                            onChange={handleImageChange}
-                          />
-                        </label>
-                      ) : (
-                        <div className="relative w-full h-full group">
-                          <Image
-                            fill
-                            src={preview}
-                            alt="Preview"
-                            className="object-cover rounded-lg"
-                          />
-                          <button
-                            type="button"
-                            title="Remove image"
-                            onClick={() => {
-                              setPreview(null);
-                              setImage(null);
-                            }}
-                            className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg opacity-0 group-hover:opacity-100"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Image Caption
-                    </label>
-                    <input
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-900 text-sm"
-                      placeholder="Photo credit or caption..."
-                      value={imageCaption}
-                      onChange={(e) => setImageCaption(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex space-x-3 mt-4">
-                  <button
-                    type="button"
-                    onClick={() => router.push("/dashboard")}
-                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-4 rounded-xl font-bold transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-[2] flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold transition-all disabled:bg-blue-300 shadow-lg shadow-blue-100"
-                  >
-                    {loading ? (
-                      <Loader2 className="animate-spin" size={20} />
-                    ) : (
-                      <Save size={20} />
-                    )}
-                    <span>{loading ? "Saving..." : "Save Changes"}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </form>
+          />
         </div>
-      </main>
-    </div>
+    </DashboardPage>
   );
 }

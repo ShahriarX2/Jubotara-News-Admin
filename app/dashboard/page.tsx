@@ -1,20 +1,24 @@
 "use client";
-import { useEffect, useState } from "react";
-import Sidebar from "../../components/Sidebar";
+import { useCallback, useEffect, useState } from "react";
 import { api, News } from "../lib/api";
-import { useRouter } from "next/navigation";
-import { Trash2, Edit } from "lucide-react";
+import { Trash2, Edit, ImageDown } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import PhotoCardModal from "@/components/PhotoCardModal";
+import { useFeedback } from "@/components/FeedbackProvider";
+import { EmptyState, ErrorState, LoadingState } from "@/components/DashboardState";
+import { DashboardPage } from "@/components/DashboardShell";
 
 export default function Dashboard() {
   const [news, setNews] = useState<News[]>([]);
   const [filteredNews, setFilteredNews] = useState<News[]>([]);
+  const [selectedNews, setSelectedNews] = useState<News | null>(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const router = useRouter();
+  const { confirm, showToast } = useFeedback();
 
   useEffect(() => {
     const results = news.filter((item) =>
@@ -23,55 +27,57 @@ export default function Dashboard() {
     setFilteredNews(results);
   }, [search, news]);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
+  const fetchNews = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api(`/news?page=${page}&limit=10`);
+      const newsArray = data.news || data.data || data;
+      setNews(Array.isArray(newsArray) ? newsArray : []);
+      setTotalPages(data.totalPages || 1);
+    } catch (err: unknown) {
+      console.error("Failed to fetch news", err);
+      setNews([]);
+      setError("Unable to load news items right now.");
+    } finally {
+      setLoading(false);
     }
+  }, [page]);
 
-    const fetchNews = async () => {
-      setLoading(true);
-      try {
-        const data = await api(`/news?page=${page}&limit=10`);
-        const newsArray = data.news || data.data || data;
-        setNews(Array.isArray(newsArray) ? newsArray : []);
-        setTotalPages(data.totalPages || 1);
-      } catch (err: unknown) {
-        console.error("Failed to fetch news", err);
-        setNews([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  useEffect(() => {
     fetchNews();
-  }, [router, page]);
+  }, [fetchNews]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this news?")) return;
+    const confirmed = await confirm({
+      title: "Delete this news post?",
+      description: "This action cannot be undone.",
+      confirmText: "Delete",
+      variant: "danger",
+    });
+
+    if (!confirmed) return;
 
     const token = localStorage.getItem("token");
     try {
       await api(`/news/${id}`, "DELETE", undefined, token || "");
       setNews(news.filter((n) => n._id !== id));
+      showToast({ title: "News deleted", variant: "success" });
     } catch {
-      alert("Failed to delete news");
+      showToast({ title: "Failed to delete news", variant: "error" });
     }
   };
 
   return (
-    <div className="flex bg-gray-50 min-h-screen">
-      <Sidebar />
-
-      <main className="ml-64 p-8 w-full">
-        <div className="flex justify-between items-center mb-8">
+    <>
+      <DashboardPage className="text-gray-900">
+        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <h1 className="text-3xl font-bold text-gray-800">News Dashboard</h1>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center">
             <input
               type="text"
               placeholder="Search by headline..."
-              className="px-4 py-2 border rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+              className="w-full rounded-lg border px-4 py-2 text-gray-900 shadow-sm outline-none focus:ring-2 focus:ring-blue-500 lg:w-80"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -109,12 +115,26 @@ export default function Dashboard() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center p-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
+          <LoadingState label="Loading news items..." />
+        ) : error ? (
+          <ErrorState
+            title="Could not load news"
+            description={error}
+            onRetry={fetchNews}
+          />
+        ) : filteredNews.length === 0 ? (
+          <EmptyState
+            title={search ? "No matching news found" : "No news items yet"}
+            description={
+              search
+                ? "Try a different headline search."
+                : "Create your first news post to populate the dashboard."
+            }
+          />
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <table className="w-full text-left">
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+            <table className="min-w-[720px] w-full text-left">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-4 text-sm font-semibold text-gray-600">
@@ -163,6 +183,14 @@ export default function Dashboard() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-3">
+                        <button
+                          onClick={() => setSelectedNews(item)}
+                          title="Create photocard"
+                          className="text-violet-600 hover:text-violet-800 transition-colors"
+                          disabled={!item.imageSrc}
+                        >
+                          <ImageDown size={18} />
+                        </button>
                         <Link
                           href={`/dashboard/edit/${item._id}`}
                           title="Edit"
@@ -183,9 +211,10 @@ export default function Dashboard() {
                 ))}
               </tbody>
             </table>
+            </div>
 
             {/* Pagination Controls */}
-            <div className="flex justify-between items-center px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div className="flex flex-col items-start gap-3 border-t border-gray-200 bg-gray-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <button
                 disabled={page === 1}
                 onClick={() => setPage(page - 1)}
@@ -204,15 +233,17 @@ export default function Dashboard() {
                 Next
               </button>
             </div>
-
-            {filteredNews.length === 0 && (
-              <div className="p-12 text-center text-gray-500">
-                No news items found.
-              </div>
-            )}
           </div>
         )}
-      </main>
-    </div>
+      </DashboardPage>
+
+      {selectedNews ? (
+        <PhotoCardModal
+          news={selectedNews}
+          logoUrl="/images/logo4.png"
+          onClose={() => setSelectedNews(null)}
+        />
+      ) : null}
+    </>
   );
 }
