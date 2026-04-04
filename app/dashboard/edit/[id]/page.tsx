@@ -126,7 +126,7 @@ export default function EditNews({
     }
 
     try {
-      await api(`/news/${id}`, "PATCH", formData, token || "");
+      await api(`/news/${id}`, "PUT", formData, token || "");
       showToast({ title: "News updated", variant: "success" });
       router.push("/dashboard");
     } catch (error: unknown) {
