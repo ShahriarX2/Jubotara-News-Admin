@@ -1,4 +1,6 @@
-export const API_URL = "https://jubotara-news-api.onrender.com/api/v1";
+/** Same-origin path; next.config.ts rewrites to BACKEND_ORIGIN. Override only if the API sends proper CORS for this app. */
+export const API_URL =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "/api/v1";
 
 export interface Category {
   _id: string;
