@@ -126,7 +126,21 @@ export default function EditNews({
     }
 
     try {
-      await api(`/news/${id}`, "PUT", formData, token || "");
+      if (image) {
+        await api(`/news/${id}`, "PUT", formData, token || "");
+      } else {
+        await api(`/news/${id}`, "PUT", {
+          headline,
+          content,
+          category,
+          reporterInfo,
+          imageCaption,
+          status,
+          isFeatured,
+          metaTitle,
+          metaDescription,
+        }, token || "");
+      }
       showToast({ title: "News updated", variant: "success" });
       router.push("/dashboard");
     } catch (error: unknown) {
