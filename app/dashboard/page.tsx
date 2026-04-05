@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { api, News } from "../lib/api";
-import { Trash2, Edit, ImageDown } from "lucide-react";
+import { Trash2, Edit, ImageDown, Link as LinkIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import PhotoCardModal from "@/components/PhotoCardModal";
@@ -66,6 +66,19 @@ export default function Dashboard() {
     } catch {
       showToast({ title: "Failed to delete news", variant: "error" });
     }
+  };
+
+  const handleCopyLink = (slug: string) => {
+    if (!slug) {
+      showToast({ title: "No slug found for this news", variant: "error" });
+      return;
+    }
+    const url = `https://jubotaranews.com/news/${slug}`;
+    navigator.clipboard.writeText(url).then(() => {
+      showToast({ title: "Link copied to clipboard", variant: "success" });
+    }).catch(() => {
+      showToast({ title: "Failed to copy link", variant: "error" });
+    });
   };
 
   return (
@@ -134,7 +147,7 @@ export default function Dashboard() {
         ) : (
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
-            <table className="min-w-[720px] w-full text-left">
+            <table className="min-w-180 w-full text-left">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-4 text-sm font-semibold text-gray-600">
@@ -190,6 +203,13 @@ export default function Dashboard() {
                           disabled={!item.imageSrc}
                         >
                           <ImageDown size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleCopyLink(item.slug || "")}
+                          title="Copy link"
+                          className="text-emerald-600 hover:text-emerald-800 transition-colors"
+                        >
+                          <LinkIcon size={18} />
                         </button>
                         <Link
                           href={`/dashboard/edit/${item._id}`}
