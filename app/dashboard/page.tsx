@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { api, News } from "../lib/api";
+import { api, News, Category } from "../lib/api";
 import { Trash2, Edit, ImageDown, Link as LinkIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
