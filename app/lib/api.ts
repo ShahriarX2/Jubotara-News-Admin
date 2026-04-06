@@ -17,9 +17,12 @@ export interface News {
   reporterInfo?: string;
   imageCaption?: string;
   status?: string;
+  authorName?: string;
   isFeatured?: boolean;
   metaTitle?: string;
   metaDescription?: string;
+  tags?: string[];
+  viewsCount?: number;
   slug?: string;
   createdAt: string;
   publishedAt?: string;
@@ -44,12 +47,28 @@ export interface TeamMember {
   order: number;
 }
 
-export const api = async (
+export interface Subscriber {
+  _id: string;
+  email: string;
+  createdAt: string;
+}
+
+export interface ContactMessage {
+  _id: string;
+  name: string;
+  email: string;
+  subject?: string;
+  message: string;
+  createdAt: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const api = async <T = any>(
   endpoint: string,
   method: string = "GET",
   body?: Record<string, unknown> | FormData,
   token?: string,
-) => {
+): Promise<T> => {
   const headers: Record<string, string> = {};
   
   if (!(body instanceof FormData)) {
@@ -58,6 +77,11 @@ export const api = async (
   
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+  } else if (typeof window !== "undefined") {
+    const localToken = localStorage.getItem("token");
+    if (localToken) {
+      headers["Authorization"] = `Bearer ${localToken}`;
+    }
   }
 
   const res = await fetch(`${API_URL}${endpoint}`, {
@@ -79,5 +103,11 @@ export const api = async (
     throw new Error(errorMessage);
   }
 
-  return res.json();
+  const text = await res.text();
+  if (!text) return {} as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return text as unknown as T;
+  }
 };

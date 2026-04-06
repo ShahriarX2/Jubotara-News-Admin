@@ -11,11 +11,13 @@ export default function CreateNews() {
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("");
   const [reporterInfo, setReporterInfo] = useState("");
+  const [authorName, setAuthorName] = useState("");
   const [imageCaption, setImageCaption] = useState("");
   const [status, setStatus] = useState("published");
   const [isFeatured, setIsFeatured] = useState(false);
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
+  const [tags, setTags] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -37,10 +39,41 @@ export default function CreateNews() {
   );
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      const currentToken = localStorage.getItem("token");
+    const initializeAuthor = async () => {
+      // Defer execution to avoid synchronous setState inside useEffect
+      await Promise.resolve();
+
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          if (user.name) {
+            setAuthorName((prev) => prev || user.name);
+          }
+        } catch (err) {
+          console.error("Failed to parse user from localStorage", err);
+        }
+      }
+
       try {
-        const data = await api("/category", "GET", undefined, currentToken || "");
+        const data = await api("/auth/me");
+        const user = data.user || data.data || data;
+        if (user && user.name) {
+          setAuthorName((prev) => prev || user.name);
+          localStorage.setItem("user", JSON.stringify(user));
+        }
+      } catch (err) {
+        console.error("Failed to fetch current user", err);
+      }
+    };
+
+    initializeAuthor();
+  }, []);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await api("/category");
         const categoriesArray = data.categories || data.data || data;
 
         if (Array.isArray(categoriesArray) && categoriesArray.length > 0) {
@@ -77,24 +110,28 @@ export default function CreateNews() {
     event.preventDefault();
     setLoading(true);
 
-    const token = localStorage.getItem("token");
     const formData = new FormData();
     formData.append("headline", headline);
     formData.append("content", content);
     formData.append("category", category);
     formData.append("reporterInfo", reporterInfo);
+    formData.append("authorName", authorName);
     formData.append("imageCaption", imageCaption);
     formData.append("status", status);
     formData.append("isFeatured", String(isFeatured));
     formData.append("metaTitle", metaTitle || headline);
     formData.append("metaDescription", metaDescription || content.slice(0, 160));
 
+    if (tags) {
+      const tagsArray = tags.split(",").map((t) => t.trim()).filter((t) => t !== "");
+      tagsArray.forEach((tag) => formData.append("tags", tag));
+    }
+
     if (image) {
       formData.append("image", image);
     }
-
     try {
-      await api("/news", "POST", formData, token || "");
+      await api("/news", "POST", formData);
       showToast({ title: "News published", variant: "success" });
       router.push("/dashboard");
     } catch (error: unknown) {
@@ -118,11 +155,13 @@ export default function CreateNews() {
             content={content}
             category={category}
             reporterInfo={reporterInfo}
+            authorName={authorName}
             imageCaption={imageCaption}
             status={status}
             isFeatured={isFeatured}
             metaTitle={metaTitle}
             metaDescription={metaDescription}
+            tags={tags}
             preview={preview}
             categories={categories}
             loading={loading}
@@ -131,11 +170,13 @@ export default function CreateNews() {
             onContentChange={setContent}
             onCategoryChange={setCategory}
             onReporterInfoChange={setReporterInfo}
+            onAuthorNameChange={setAuthorName}
             onImageCaptionChange={setImageCaption}
             onStatusChange={setStatus}
             onIsFeaturedChange={setIsFeatured}
             onMetaTitleChange={setMetaTitle}
             onMetaDescriptionChange={setMetaDescription}
+            onTagsChange={setTags}
             onImageChange={handleImageChange}
             onRemoveImage={() => {
               setPreview(null);

@@ -13,28 +13,90 @@ export default function Dashboard() {
   const [news, setNews] = useState<News[]>([]);
   const [filteredNews, setFilteredNews] = useState<News[]>([]);
   const [selectedNews, setSelectedNews] = useState<News | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalNews, setTotalNews] = useState(0);
+  const [recentCount, setRecentCount] = useState(0);
+  const [activeCategoriesCount, setActiveCategoriesCount] = useState(0);
   const { confirm, showToast } = useFeedback();
 
   useEffect(() => {
-    const results = news.filter((item) =>
-      item.headline.toLowerCase().includes(search.toLowerCase())
-    );
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedCategory, selectedStatus, debouncedSearch]);
+
+  useEffect(() => {
+    const results = news.filter((item) => {
+      const matchesSearch = item.headline.toLowerCase().includes(search.toLowerCase());
+      const matchesCategory = selectedCategory === "all" || 
+        (typeof item.category === "object" 
+          ? (item.category._id === selectedCategory || item.category.name === selectedCategory) 
+          : (item.category === selectedCategory));
+      const matchesStatus = selectedStatus === "all" || item.status === selectedStatus;
+      return matchesSearch && matchesCategory && matchesStatus;
+    });
     setFilteredNews(results);
-  }, [search, news]);
+  }, [search, news, selectedCategory, selectedStatus]);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const data = await api("/category");
+      const categoriesArray = data.categories || data.data || data;
+      setCategories(Array.isArray(categoriesArray) ? categoriesArray : []);
+      setActiveCategoriesCount(Array.isArray(categoriesArray) ? categoriesArray.length : 0);
+    } catch (err) {
+      console.error("Failed to fetch categories", err);
+    }
+  }, []);
 
   const fetchNews = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await api(`/news?page=${page}&limit=10`);
+      const queryParams = new URLSearchParams({
+        page: String(page),
+        limit: "10",
+        category: selectedCategory,
+        status: selectedStatus,
+      });
+      if (debouncedSearch) {
+        queryParams.append("search", debouncedSearch);
+      }
+      const data = await api(`/news?${queryParams.toString()}`);
       const newsArray = data.news || data.data || data;
       setNews(Array.isArray(newsArray) ? newsArray : []);
       setTotalPages(data.totalPages || 1);
+      
+      const total = data.totalCount || data.totalNews || data.total || data.totalDocs || (Array.isArray(newsArray) ? newsArray.length : 0);
+      setTotalNews(total);
+      
+      if (data.totalCategories) {
+        setActiveCategoriesCount(data.totalCategories);
+      }
+      
+      if (data.recentCount) {
+        setRecentCount(data.recentCount);
+      } else if (page === 1 && selectedCategory === "all" && !debouncedSearch) {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const recent = (newsArray as News[]).filter(
+          (n) => new Date(n.createdAt) > sevenDaysAgo
+        ).length;
+        setRecentCount(recent);
+      }
     } catch (err: unknown) {
       console.error("Failed to fetch news", err);
       setNews([]);
@@ -42,11 +104,15 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, selectedCategory, selectedStatus, debouncedSearch]);
 
   useEffect(() => {
     fetchNews();
   }, [fetchNews]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
@@ -58,9 +124,8 @@ export default function Dashboard() {
 
     if (!confirmed) return;
 
-    const token = localStorage.getItem("token");
     try {
-      await api(`/news/${id}`, "DELETE", undefined, token || "");
+      await api(`/news/${id}`, "DELETE");
       setNews(news.filter((n) => n._id !== id));
       showToast({ title: "News deleted", variant: "success" });
     } catch {
@@ -86,7 +151,29 @@ export default function Dashboard() {
       <DashboardPage className="text-gray-900">
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <h1 className="text-3xl font-bold text-gray-800">News Dashboard</h1>
-          <div className="flex items-center">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <select
+              className="rounded-lg border px-4 py-2 text-gray-900 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              <option value="all">All Categories</option>
+              {categories.map((cat) => (
+                <option key={cat._id} value={cat.name}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+            <select
+              className="rounded-lg border px-4 py-2 text-gray-900 shadow-sm outline-none focus:ring-2 focus:ring-blue-500"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+            >
+              <option value="all">All Status</option>
+              <option value="published">Published</option>
+              <option value="pending">Pending</option>
+              <option value="draft">Draft</option>
+            </select>
             <input
               type="text"
               placeholder="Search by headline..."
@@ -101,20 +188,14 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <p className="text-sm font-medium text-gray-500 mb-1">Total News</p>
-            <h3 className="text-2xl font-bold text-gray-800">{news.length}</h3>
+            <h3 className="text-2xl font-bold text-gray-800">{totalNews}</h3>
           </div>
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <p className="text-sm font-medium text-gray-500 mb-1">
               Recent (7 Days)
             </p>
             <h3 className="text-2xl font-bold text-gray-800">
-              {
-                news.filter(
-                  (n) =>
-                    new Date(n.createdAt) >
-                    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-                ).length
-              }
+              {recentCount}
             </h3>
           </div>
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
@@ -122,7 +203,7 @@ export default function Dashboard() {
               Active Categories
             </p>
             <h3 className="text-2xl font-bold text-gray-800">
-              {new Set(news.map((n) => (typeof n.category === "object" ? n.category.name : n.category))).size}
+              {activeCategoriesCount}
             </h3>
           </div>
         </div>
@@ -155,6 +236,15 @@ export default function Dashboard() {
                   </th>
                   <th className="px-6 py-4 text-sm font-semibold text-gray-600">
                     Category
+                  </th>
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-600">
+                    Author
+                  </th>
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-600">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-600">
+                    Views
                   </th>
                   <th className="px-6 py-4 text-sm font-semibold text-gray-600">
                     Date
@@ -191,9 +281,28 @@ export default function Dashboard() {
                         ? item.category.name
                         : item.category || "N/A"}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {new Date(item.createdAt).toLocaleDateString()}
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {item.authorName || "N/A"}
                     </td>
+                    <td className="px-6 py-4 text-sm">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          item.status === "published"
+                            ? "bg-green-100 text-green-800"
+                            : item.status === "pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {item.status?.charAt(0).toUpperCase() + (item.status?.slice(1) || "") || "Draft"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+      {item.viewsCount?.toLocaleString() || 0}
+    </td>
+    <td className="px-6 py-4 text-sm text-gray-500">
+      {new Date(item.createdAt).toLocaleDateString()}
+    </td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-3">
                         <button

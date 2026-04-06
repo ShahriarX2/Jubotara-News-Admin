@@ -41,13 +41,19 @@ export default function CategoriesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    const token = localStorage.getItem("token");
-
+    const trimmedName = name.trim();
+    const finalSlug = slug.trim() || trimmedName.toLowerCase().replace(/\s+/g, '-');
     try {
       if (editingCategory) {
-        await api(`/category/${editingCategory._id}`, "PATCH", { name, slug }, token || "");
+        await api(`/category/${editingCategory._id}`, "PUT", {
+          name: trimmedName,
+          slug: finalSlug,
+        });
       } else {
-        await api("/category", "POST", { name, slug }, token || "");
+        await api("/category", "POST", {
+          name: trimmedName,
+          slug: finalSlug,
+        });
       }
       setShowModal(false);
       setName("");
@@ -76,7 +82,7 @@ export default function CategoriesPage() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (cat: Category) => {
     const confirmed = await confirm({
       title: "Delete this category?",
       description: "Any news assigned to it may be affected.",
@@ -85,9 +91,8 @@ export default function CategoriesPage() {
     });
 
     if (!confirmed) return;
-    const token = localStorage.getItem("token");
     try {
-      await api(`/category/${id}`, "DELETE", undefined, token || "");
+      await api(`/category/${cat._id}`, "DELETE");
       fetchCategories();
       showToast({ title: "Category deleted", variant: "success" });
     } catch {
@@ -152,7 +157,7 @@ export default function CategoriesPage() {
                           <Edit size={18} />
                         </button>
                         <button
-                          onClick={() => handleDelete(cat._id)}
+                          onClick={() => handleDelete(cat)}
                           className="text-red-600 hover:text-red-800 transition-colors"
                         >
                           <Trash2 size={18} />

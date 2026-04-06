@@ -17,11 +17,13 @@ export default function EditNews({
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("");
   const [reporterInfo, setReporterInfo] = useState("");
+  const [authorName, setAuthorName] = useState("");
   const [imageCaption, setImageCaption] = useState("");
   const [status, setStatus] = useState("published");
   const [isFeatured, setIsFeatured] = useState(false);
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
+  const [tags, setTags] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -43,11 +45,9 @@ export default function EditNews({
   );
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
     const fetchData = async () => {
       try {
-        const categoryData = await api("/category", "GET", undefined, token || "");
+        const categoryData = await api("/category");
         const categoriesArray =
           categoryData.categories || categoryData.data || categoryData;
 
@@ -57,7 +57,7 @@ export default function EditNews({
             : fallbackCategories,
         );
 
-        const response = await api(`/news/${id}`, "GET", undefined, token || "");
+        const response = await api(`/news/${id}`);
         const newsItem: News = response.data || response;
 
         setHeadline(newsItem.headline || "");
@@ -68,11 +68,28 @@ export default function EditNews({
             : (newsItem.category as Category)?._id || "",
         );
         setReporterInfo(newsItem.reporterInfo || "");
+        const fetchedAuthorName = newsItem.authorName || "";
+        if (!fetchedAuthorName) {
+          const storedUser = localStorage.getItem("user");
+          if (storedUser) {
+            try {
+              const user = JSON.parse(storedUser);
+              if (user.name) {
+                setAuthorName(user.name);
+              }
+            } catch (err) {
+              console.error("Failed to parse user from localStorage", err);
+            }
+          }
+        } else {
+          setAuthorName(fetchedAuthorName);
+        }
         setImageCaption(newsItem.imageCaption || "");
         setStatus(newsItem.status || "published");
         setIsFeatured(!!newsItem.isFeatured);
         setMetaTitle(newsItem.metaTitle || "");
         setMetaDescription(newsItem.metaDescription || "");
+        setTags(newsItem.tags?.join(", ") || "");
 
         if (newsItem.imageSrc) {
           setPreview(newsItem.imageSrc);
@@ -109,17 +126,22 @@ export default function EditNews({
     event.preventDefault();
     setLoading(true);
 
-    const token = localStorage.getItem("token");
     const formData = new FormData();
     formData.append("headline", headline);
     formData.append("content", content);
     formData.append("category", category);
     formData.append("reporterInfo", reporterInfo);
+    formData.append("authorName", authorName);
     formData.append("imageCaption", imageCaption);
     formData.append("status", status);
     formData.append("isFeatured", String(isFeatured));
     formData.append("metaTitle", metaTitle);
     formData.append("metaDescription", metaDescription);
+
+    if (tags) {
+      const tagsArray = tags.split(",").map((t) => t.trim()).filter((t) => t !== "");
+      tagsArray.forEach((tag) => formData.append("tags", tag));
+    }
 
     if (image) {
       formData.append("image", image);
@@ -127,19 +149,22 @@ export default function EditNews({
 
     try {
       if (image) {
-        await api(`/news/${id}`, "PUT", formData, token || "");
+        await api(`/news/${id}`, "PUT", formData);
       } else {
+        const tagsArray = tags.split(",").map((t) => t.trim()).filter((t) => t !== "");
         await api(`/news/${id}`, "PUT", {
           headline,
           content,
           category,
           reporterInfo,
+          authorName,
           imageCaption,
           status,
           isFeatured,
           metaTitle,
           metaDescription,
-        }, token || "");
+          tags: tagsArray,
+        });
       }
       showToast({ title: "News updated", variant: "success" });
       router.push("/dashboard");
@@ -172,11 +197,13 @@ export default function EditNews({
             content={content}
             category={category}
             reporterInfo={reporterInfo}
+            authorName={authorName}
             imageCaption={imageCaption}
             status={status}
             isFeatured={isFeatured}
             metaTitle={metaTitle}
             metaDescription={metaDescription}
+            tags={tags}
             preview={preview}
             categories={categories}
             loading={loading}
@@ -184,11 +211,13 @@ export default function EditNews({
             onContentChange={setContent}
             onCategoryChange={setCategory}
             onReporterInfoChange={setReporterInfo}
+            onAuthorNameChange={setAuthorName}
             onImageCaptionChange={setImageCaption}
             onStatusChange={setStatus}
             onIsFeaturedChange={setIsFeatured}
             onMetaTitleChange={setMetaTitle}
             onMetaDescriptionChange={setMetaDescription}
+            onTagsChange={setTags}
             onImageChange={handleImageChange}
             onRemoveImage={() => {
               setPreview(null);

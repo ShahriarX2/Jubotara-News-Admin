@@ -20,6 +20,9 @@ export default function Login() {
 
       if (data.token) {
         localStorage.setItem("token", data.token);
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
         // Set cookie for proxy auth (expires in 7 days)
         document.cookie = `token=${data.token}; path=/; max-age=604800; samesite=lax`;
         router.push("/dashboard");

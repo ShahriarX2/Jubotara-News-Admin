@@ -16,8 +16,8 @@ export default function AnalyticsPage() {
       setError(null);
       try {
         const [newsData, usersData] = await Promise.all([
-          api("/news?limit=100"), // Get more items for better analytics
-          api("/users").catch(() => ({ data: [] })) // Optional users fetch
+          api("/news?limit=1000"), // Get more items for better analytics
+          api("/users").catch(() => ({ data: [] })), // Optional users fetch
         ]);
         
         setNews(newsData.news || newsData.data || newsData || []);
@@ -40,6 +40,9 @@ export default function AnalyticsPage() {
     return acc;
   }, {});
 
+  const totalViews = news.reduce((acc, curr) => acc + (curr.viewsCount || 0), 0);
+  const avgViews = news.length > 0 ? (totalViews / news.length).toFixed(0) : 0;
+
   const sortedCategories = Object.entries(categoryStats).sort((a, b) => b[1] - a[1]);
   const maxCategoryCount = Math.max(...Object.values(categoryStats), 1);
 
@@ -60,6 +63,8 @@ export default function AnalyticsPage() {
     count: newsByDay[day] || 0
   }));
   const maxDayCount = Math.max(...dayStats.map(d => d.count), 1);
+
+  const trendingNews = [...news].sort((a, b) => (b.viewsCount || 0) - (a.viewsCount || 0)).slice(0, 5);
 
   if (loading) {
     return (
@@ -91,8 +96,8 @@ export default function AnalyticsPage() {
         <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard icon={<TrendingUp size={20}/>} label="Total Posts" value={news.length} color="blue" />
           <StatCard icon={<Users size={20}/>} label="Team Members" value={users.length} color="purple" />
-          <StatCard icon={<PieChart size={20}/>} label="Categories" value={sortedCategories.length} color="green" />
-          <StatCard icon={<BarChart3 size={20}/>} label="Avg Posts/Day" value={(news.length / 30).toFixed(1)} color="orange" />
+          <StatCard icon={<PieChart size={20}/>} label="Total Views" value={totalViews.toLocaleString()} color="green" />
+          <StatCard icon={<BarChart3 size={20}/>} label="Avg Views/Post" value={avgViews} color="orange" />
         </div>
 
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
@@ -137,6 +142,34 @@ export default function AnalyticsPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        <div className="mt-8 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <h3 className="text-lg font-bold text-gray-800 mb-6">Top Performing Content</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-sm font-semibold text-gray-600 border-b">
+                  <th className="pb-4">Headline</th>
+                  <th className="pb-4">Category</th>
+                  <th className="pb-4">Views</th>
+                  <th className="pb-4">Published</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {trendingNews.map((item) => (
+                  <tr key={item._id} className="text-sm">
+                    <td className="py-4 font-medium text-gray-800 line-clamp-1">{item.headline}</td>
+                    <td className="py-4 text-gray-600">
+                      {typeof item.category === "object" ? item.category.name : (item.category || "N/A")}
+                    </td>
+                    <td className="py-4 font-bold text-blue-600">{(item.viewsCount || 0).toLocaleString()}</td>
+                    <td className="py-4 text-gray-500">{new Date(item.createdAt).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
     </DashboardPage>

@@ -60,7 +60,6 @@ export default function TeamPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    const token = localStorage.getItem("token");
 
     const formData = new FormData();
     formData.append("name", name);
@@ -74,9 +73,9 @@ export default function TeamPage() {
 
     try {
       if (editingMember) {
-        await api(`/team/${editingMember._id}`, "PATCH", formData, token || "");
+        await api(`/team/${editingMember._id}`, "PATCH", formData);
       } else {
-        await api("/team", "POST", formData, token || "");
+        await api("/team", "POST", formData);
       }
       setShowModal(false);
       resetForm();
@@ -127,9 +126,8 @@ export default function TeamPage() {
     });
 
     if (!confirmed) return;
-    const token = localStorage.getItem("token");
     try {
-      await api(`/team/${id}`, "DELETE", undefined, token || "");
+      await api(`/team/${id}`, "DELETE");
       fetchMembers();
       showToast({ title: "Team member deleted", variant: "success" });
     } catch {

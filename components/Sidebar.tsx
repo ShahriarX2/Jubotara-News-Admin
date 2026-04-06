@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { api, User as UserType } from "../app/lib/api";
 import {
   LayoutDashboard,
   PlusCircle,
@@ -12,6 +13,8 @@ import {
   BarChart3,
   Settings,
   Contact2,
+  Mail,
+  MessageSquare,
   Menu,
   X,
 } from "lucide-react";
@@ -19,6 +22,36 @@ import {
 export default function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<UserType | null>(null);
+
+  useEffect(() => {
+    const initializeUser = async () => {
+      // Defer execution to avoid synchronous setState inside useEffect
+      await Promise.resolve();
+      
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (err) {
+          console.error("Failed to parse user from localStorage", err);
+        }
+      }
+
+      // Also fetch fresh user data from API to ensure name is correct
+      try {
+        const data = await api("/auth/me");
+        if (data.user) {
+          setUser(data.user);
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+      } catch (err) {
+        console.error("Failed to fetch current user", err);
+      }
+    };
+
+    initializeUser();
+  }, []);
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -26,12 +59,15 @@ export default function Sidebar() {
     { name: "Categories", href: "/dashboard/categories", icon: FolderTree },
     { name: "Users", href: "/dashboard/users", icon: Users },
     { name: "Team", href: "/dashboard/team", icon: Contact2 },
+    { name: "Subscribers", href: "/dashboard/subscribers", icon: Mail },
+    { name: "Messages", href: "/dashboard/messages", icon: MessageSquare },
     { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ];
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
     window.location.href = "/login";
   };
@@ -75,7 +111,16 @@ export default function Sidebar() {
       <div className="border-t border-gray-800 p-4">
         <div className="mb-2 flex items-center space-x-3 p-3 text-gray-400">
           <User size={20} />
-          <span className="text-sm font-medium">Admin User</span>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">
+              {user ? user.name : "Loading..."}
+            </span>
+            {user && (
+              <span className="text-xs text-gray-500 capitalize">
+                {user.role}
+              </span>
+            )}
+          </div>
         </div>
         <button
           onClick={handleLogout}

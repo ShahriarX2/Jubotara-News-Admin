@@ -6,7 +6,7 @@ export const login = async (
 ): Promise<string | undefined> => {
   try {
     const res = await fetch(
-      "https://jubotara-news-api.onrender.com/api/v1/auth/login",
+      "/api/v1/auth/login",
       {
         method: "POST",
         headers: {
@@ -21,10 +21,10 @@ export const login = async (
       localStorage.setItem("token", data.token);
       const cookieStore = await cookies();
       cookieStore.set("token", data.token, { path: "/" });
-    } else {
-      throw new Error("Login failed");
-    }
-    return data.token;
+      return data.token;
+    } 
+    console.error("Login failed: No token received");
+    return undefined;
   } catch (err) {
     console.error(err);
     return undefined;

@@ -12,9 +12,11 @@ interface NewsFormProps {
   reporterInfo: string;
   imageCaption: string;
   status: string;
+  authorName: string;
   isFeatured: boolean;
   metaTitle: string;
   metaDescription: string;
+  tags: string;
   preview: string | null;
   categories: Category[];
   loading: boolean;
@@ -25,9 +27,11 @@ interface NewsFormProps {
   onReporterInfoChange: (value: string) => void;
   onImageCaptionChange: (value: string) => void;
   onStatusChange: (value: string) => void;
+  onAuthorNameChange: (value: string) => void;
   onIsFeaturedChange: (value: boolean) => void;
   onMetaTitleChange: (value: string) => void;
   onMetaDescriptionChange: (value: string) => void;
+  onTagsChange: (value: string) => void;
   onImageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveImage: () => void;
   onCancel: () => void;
@@ -42,9 +46,11 @@ export default function NewsForm({
   reporterInfo,
   imageCaption,
   status,
+  authorName,
   isFeatured,
   metaTitle,
   metaDescription,
+  tags,
   preview,
   categories,
   loading,
@@ -55,9 +61,11 @@ export default function NewsForm({
   onReporterInfoChange,
   onImageCaptionChange,
   onStatusChange,
+  onAuthorNameChange,
   onIsFeaturedChange,
   onMetaTitleChange,
   onMetaDescriptionChange,
+  onTagsChange,
   onImageChange,
   onRemoveImage,
   onCancel,
@@ -190,6 +198,18 @@ export default function NewsForm({
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Author Name
+              </label>
+              <input
+                className="w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., John Doe"
+                value={authorName}
+                onChange={(event) => onAuthorNameChange(event.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
                 Reporter Info
               </label>
               <input
@@ -197,6 +217,18 @@ export default function NewsForm({
                 placeholder="e.g., নিজস্ব প্রতিবেদক"
                 value={reporterInfo}
                 onChange={(event) => onReporterInfoChange(event.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Tags
+              </label>
+              <input
+                className="w-full rounded-lg border border-gray-300 bg-white p-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Comma separated tags (e.g. news, update, live)"
+                value={tags}
+                onChange={(event) => onTagsChange(event.target.value)}
               />
             </div>
           </div>

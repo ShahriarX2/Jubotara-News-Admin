@@ -24,10 +24,9 @@ export default function UsersPage() {
   const { confirm, showToast } = useFeedback();
 
   const fetchUsers = async () => {
-    const token = localStorage.getItem("token");
     setError(null);
     try {
-      const data = await api("/users", "GET", undefined, token || "");
+      const data = await api("/users");
       const usersArray = data.users || data.data || data;
       setUsers(Array.isArray(usersArray) ? usersArray : []);
     } catch (error: unknown) {
@@ -50,13 +49,12 @@ export default function UsersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    const token = localStorage.getItem("token");
 
     try {
       if (editingUser) {
-        await api(`/users/${editingUser._id}`, "PATCH", { name, email, role }, token || "");
+        await api(`/users/${editingUser._id}`, "PATCH", { name, email, role });
       } else {
-        await api("/auth/register", "POST", { name, email, password, role }, token || "");
+        await api("/auth/register", "POST", { name, email, password, role });
       }
       setShowModal(false);
       resetForm();
@@ -101,9 +99,8 @@ export default function UsersPage() {
     });
 
     if (!confirmed) return;
-    const token = localStorage.getItem("token");
     try {
-      await api(`/users/${id}`, "DELETE", undefined, token || "");
+      await api(`/users/${id}`, "DELETE");
       fetchUsers();
       showToast({ title: "User deleted", variant: "success" });
     } catch {
