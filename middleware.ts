@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function proxy(request: NextRequest) {
+export const runtime = 'experimental-edge';
+
+export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard');
   const isLoginPage = request.nextUrl.pathname === '/login';
