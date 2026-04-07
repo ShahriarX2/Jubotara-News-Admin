@@ -5,6 +5,7 @@ const BACKEND_ORIGIN =
   process.env.BACKEND_ORIGIN ?? "https://jubotara-news-api.onrender.com";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   async rewrites() {
     return [
       {
