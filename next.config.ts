@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 /** Upstream API (no CORS needed: browser calls same-origin /api/v1, Next proxies here). */
 const BACKEND_ORIGIN =
-  process.env.BACKEND_ORIGIN ?? "https://jubotara-news-api.onrender.com";
+  process.env.BACKEND_ORIGIN ?? "https://api.jubotaranews.com";
 
 const nextConfig: NextConfig = {
   output: "standalone",
