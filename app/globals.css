@@ -34,3 +34,8 @@ body {
   height: 0;
   pointer-events: none;
 }
+
+/* Bengali Ordered List */
+.prose ol, .tiptap ol {
+  list-style-type: bengali !important;
+}
