@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { Upload, X, Loader2, CheckCircle2, Save } from "lucide-react";
 import type { Category } from "@/app/lib/api";
+import TiptapEditor from "./TiptapEditor";
 
 interface NewsFormProps {
   mode: "create" | "edit";
@@ -95,13 +96,10 @@ export default function NewsForm({
               <label className="mb-2 block text-sm font-semibold text-gray-700">
                 Content
               </label>
-              <textarea
-                required
-                rows={15}
-                className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none transition-all focus:ring-2 focus:ring-blue-500"
+              <TiptapEditor
+                content={content}
+                onChange={onContentChange}
                 placeholder="Write your content here..."
-                value={content}
-                onChange={(event) => onContentChange(event.target.value)}
               />
             </div>
           </div>

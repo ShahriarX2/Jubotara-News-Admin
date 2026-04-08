@@ -5,6 +5,7 @@ import { api, Category } from "../../lib/api";
 import { useFeedback } from "@/components/FeedbackProvider";
 import { DashboardPage } from "@/components/DashboardShell";
 import NewsForm from "@/components/NewsForm";
+import { stripHtml } from "@/app/lib/utils";
 
 export default function CreateNews() {
   const [headline, setHeadline] = useState("");
@@ -120,7 +121,7 @@ export default function CreateNews() {
     formData.append("status", status);
     formData.append("isFeatured", String(isFeatured));
     formData.append("metaTitle", metaTitle || headline);
-    formData.append("metaDescription", metaDescription || content.slice(0, 160));
+    formData.append("metaDescription", metaDescription || stripHtml(content).slice(0, 160));
 
     if (tags) {
       const tagsArray = tags.split(",").map((t) => t.trim()).filter((t) => t !== "");
