@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import KanizPhotoCardAd from "./photocardAds/KanizPhotoCardAd";
+import PrimePhotoCardAd from "./photocardAds/PrimePhotoCardAd";
 
 interface NewsPhotoCardProps {
   headline: string;
@@ -15,6 +17,7 @@ interface NewsPhotoCardProps {
   footerBarFontSize?: number;
   centerTextFontSize?: number;
   isPreview?: boolean;
+  adVariant?: "kaniz" | "prime" | "none";
   cardRef?: React.RefObject<HTMLDivElement | null>;
 }
 
@@ -28,9 +31,10 @@ export default function NewsPhotoCard({
   accentColor = "#D9232D",
   imageScale = 1,
   headlineFontSize = 65,
-  footerBarFontSize = 34,
+  footerBarFontSize = 31,
   centerTextFontSize = 28,
   isPreview = false,
+  adVariant = "kaniz",
   cardRef,
 }: NewsPhotoCardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -71,14 +75,17 @@ export default function NewsPhotoCard({
         color: "#ffffff",
         display: "flex",
         flexDirection: "column",
+        border: "1px solid rgba(255, 255, 255, 0.1)", // Very subtle border for dark mode feel
       }}
     >
+      <div style={{ position: "relative", width: "1080px", height: adVariant === "none" ? "1080px" : "940px" }}>
       <div
         style={{
           position: "absolute",
           inset: 0,
           zIndex: 1,
           overflow: "hidden",
+          transform: adVariant === "prime" ? "translateY(-10px)" : "none",
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -90,7 +97,7 @@ export default function NewsPhotoCard({
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            objectPosition: "center",
+            objectPosition: "center center",
             transform: `scale(${imageScale})`,
             transition: "transform 0.2s ease-out",
           }}
@@ -157,9 +164,9 @@ export default function NewsPhotoCard({
         style={{
           position: "absolute",
           left: 0,
-          bottom: "80px",
+          bottom: adVariant === "kaniz" ? "68px" : "78px",
           width: "100%",
-          padding: "0 60px 40px",
+          padding: "0 60px 30px",
           zIndex: 10,
         }}
       >
@@ -200,7 +207,7 @@ export default function NewsPhotoCard({
           left: 0,
           bottom: 0,
           width: "100%",
-          height: "100px",
+          height: "80px",
           backgroundColor: accentColor,
           zIndex: 10,
           display: "flex",
@@ -228,7 +235,7 @@ export default function NewsPhotoCard({
             flex: 1,
             display: "flex",
             justifyContent: "center",
-            fontWeight: 700,
+            fontWeight: 600,
             fontSize: `${centerTextFontSize}px`,
           }}
         >
@@ -263,6 +270,9 @@ export default function NewsPhotoCard({
           <span>jubotaranews.com</span>
         </div>
       </div>
+      </div>
+      {adVariant === "kaniz" && <KanizPhotoCardAd />}
+      {adVariant === "prime" && <PrimePhotoCardAd />}
     </div>
   );
 

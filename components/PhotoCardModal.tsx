@@ -22,10 +22,11 @@ export default function PhotoCardModal({
 }: PhotoCardModalProps) {
   const [headline, setHeadline] = useState(news.headline);
   const [headlineFontSize, setHeadlineFontSize] = useState(65);
-  const [footerBarFontSize, setFooterBarFontSize] = useState(34);
+  const [footerBarFontSize, setFooterBarFontSize] = useState(31);
   const [centerTextFontSize, setCenterTextFontSize] = useState(28);
   const [accentColor, setAccentColor] = useState("#D9232D");
   const [imageScale, setImageScale] = useState(1);
+  const [adVariant, setAdVariant] = useState<"kaniz" | "prime" | "none">("none");
   const [isDownloading, setIsDownloading] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -58,8 +59,10 @@ export default function PhotoCardModal({
 
       const link = document.createElement("a");
       link.href = dataUrl;
-      link.download = `news-card-${news._id}.png`;
+      link.download = `jubotara-news-${news._id}.png`;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       showToast({ title: "Photocard downloaded", variant: "success" });
     } catch (error) {
       console.error("Failed to export photo card", error);
@@ -89,6 +92,7 @@ export default function PhotoCardModal({
               headlineFontSize={headlineFontSize}
               footerBarFontSize={footerBarFontSize}
               centerTextFontSize={centerTextFontSize}
+              adVariant={adVariant}
               isPreview
             />
           </div>
@@ -117,6 +121,21 @@ export default function PhotoCardModal({
                 onChange={(event) => setHeadline(event.target.value)}
                 className="h-28 w-full rounded-xl border-2 border-gray-200 p-3 text-lg font-medium text-gray-900 outline-none transition focus:border-blue-500"
               />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-bold uppercase text-gray-700">
+                Ad Variant
+              </label>
+              <select
+                value={adVariant}
+                onChange={(e) => setAdVariant(e.target.value as "kaniz" | "prime" | "none")}
+                className="w-full rounded-xl border-2 border-gray-200 p-3 text-lg font-medium text-gray-900 outline-none transition focus:border-blue-500"
+              >
+                <option value="kaniz">Kaniz Hospital and Lab</option>
+                <option value="prime">Prime Hospital and Diagnostic Center</option>
+                <option value="none">None (No Ad)</option>
+              </select>
             </div>
 
             <div>
@@ -303,6 +322,7 @@ export default function PhotoCardModal({
           headlineFontSize={headlineFontSize}
           footerBarFontSize={footerBarFontSize}
           centerTextFontSize={centerTextFontSize}
+          adVariant={adVariant}
         />
       </div>
     </div>
