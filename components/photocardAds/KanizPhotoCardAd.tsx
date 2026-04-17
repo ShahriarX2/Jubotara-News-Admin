@@ -34,10 +34,12 @@ const KanizPhotoCardAd = () => {
             }}
           />
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
+            <div
+              style={{ display: "flex", alignItems: "baseline", gap: "10px" }}
+            >
               <h2
                 style={{
-                  fontSize: "42px",
+                  fontSize: "41px",
                   fontWeight: 900,
                   margin: 0,
                   color: "#2E3192",
@@ -56,7 +58,14 @@ const KanizPhotoCardAd = () => {
                 মানসম্মত স্বাস্থ্য সেবায় অনন্য
               </span>
             </div>
-            <div style={{ height: "3px", backgroundColor: "#ED1C24", width: "100%", marginTop: "4px" }} />
+            <div
+              style={{
+                height: "3px",
+                backgroundColor: "#ED1C24",
+                width: "100%",
+                marginTop: "4px",
+              }}
+            />
           </div>
         </div>
 
@@ -72,7 +81,9 @@ const KanizPhotoCardAd = () => {
           }}
         >
           <span style={{ fontSize: "22px", fontWeight: 600 }}>সিরিয়ালঃ</span>
-          <span style={{ fontSize: "30px", fontWeight: 800 }}>০১৩২১-০৪৭৪৭৪</span>
+          <span style={{ fontSize: "30px", fontWeight: 800 }}>
+            ০১৩২১-০৪৭৪৭৪
+          </span>
         </div>
       </div>
 
@@ -89,7 +100,8 @@ const KanizPhotoCardAd = () => {
           padding: "0 20px",
         }}
       >
-        ডি.বি. রোড, শাপলা পাড়া (রংপুর গেটলক বাস কাউন্টারের বিপরীতে), সদর, গাইবান্ধা।
+        ডি.বি. রোড, শাপলা পাড়া (রংপুর গেটলক বাস কাউন্টারের বিপরীতে), সদর,
+        গাইবান্ধা।
       </div>
     </div>
   );
