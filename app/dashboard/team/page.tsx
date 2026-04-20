@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api, TeamMember } from "../../lib/api";
-import Image from "next/image";
 import { Trash2, Edit, Plus, Loader2, X, Upload, Award } from "lucide-react";
 import { useFeedback } from "@/components/FeedbackProvider";
 import { EmptyState, ErrorState, LoadingState } from "@/components/DashboardState";
@@ -177,7 +176,7 @@ export default function TeamPage() {
                     <div className="flex min-w-0 items-center space-x-4">
                       <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 flex-shrink-0">
                         {member.image ? (
-                          <Image src={member.image} alt={member.name} fill className="object-cover" />
+                          <img src={member.image} alt={member.name} className="absolute inset-0 w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-blue-50 flex items-center justify-center text-blue-600">
                             <Plus size={24} />
@@ -231,7 +230,7 @@ export default function TeamPage() {
                 <div className="relative">
                   <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
                     {preview ? (
-                      <Image src={preview} alt="Preview" fill className="object-cover" />
+                      <img src={preview} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
                     ) : (
                       <Upload className="text-gray-400" size={24} />
                     )}

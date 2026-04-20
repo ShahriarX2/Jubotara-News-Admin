@@ -88,7 +88,6 @@ export default function NewsPhotoCard({
           transform: adVariant === "prime" ? "translateY(-10px)" : "none",
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={imageSrc}
           alt="Background"
@@ -145,7 +144,6 @@ export default function NewsPhotoCard({
             border: "4px solid white",
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={logoUrl || "/images/logo4.png"}
             alt="Jubotara News"

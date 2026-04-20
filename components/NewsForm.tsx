@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Upload, X, Loader2, CheckCircle2, Save } from "lucide-react";
 import type { Category } from "@/app/lib/api";
 import TiptapEditor from "./TiptapEditor";
@@ -257,11 +256,10 @@ export default function NewsForm({
                   </label>
                 ) : (
                   <div className="group relative h-full w-full">
-                    <Image
-                      fill
+                    <img
                       src={preview}
                       alt="Preview"
-                      className="rounded-lg object-cover"
+                      className="absolute inset-0 h-full w-full rounded-lg object-cover"
                     />
                     <button
                       type="button"

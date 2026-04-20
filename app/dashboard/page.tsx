@@ -2,7 +2,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, News, Category } from "../lib/api";
 import { Trash2, Edit, ImageDown, Link as LinkIcon } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import PhotoCardModal from "@/components/PhotoCardModal";
 import { useFeedback } from "@/components/FeedbackProvider";
@@ -263,7 +262,7 @@ export default function Dashboard() {
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
                         {item.imageSrc && (
-                          <Image
+                          <img
                             src={item.imageSrc}
                             alt=""
                             width={40}
