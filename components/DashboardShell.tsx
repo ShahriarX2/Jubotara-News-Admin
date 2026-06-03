@@ -28,16 +28,13 @@ export function DashboardShell({
     return () => window.clearTimeout(timer);
   }, [router]);
 
-  if (isCheckingAuth) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
-        <LoadingState label="Checking session..." />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
+      {isCheckingAuth && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-50">
+          <LoadingState label="Checking session..." />
+        </div>
+      )}
       <Sidebar />
       {children}
     </div>

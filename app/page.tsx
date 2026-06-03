@@ -1,22 +1,16 @@
-"use client";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
-export default function Home() {
-  const router = useRouter();
+export default async function Home() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token");
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      router.push("/dashboard");
-    } else {
-      router.push("/login");
-    }
-  }, [router]);
+  if (token) {
+    redirect("/dashboard");
+  } else {
+    redirect("/login");
+  }
 
-  return (
-    <div className="flex h-screen items-center justify-center bg-gray-50">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-    </div>
-  );
+  // This part will never be reached because of redirects
+  return null;
 }

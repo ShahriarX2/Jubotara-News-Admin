@@ -62,6 +62,14 @@ export default function NewsPhotoCard({
     return () => observer.disconnect();
   }, [isPreview]);
 
+  const proxiedImageSrc = imageSrc?.startsWith("http")
+    ? `/api/proxy-image?url=${encodeURIComponent(imageSrc)}`
+    : imageSrc;
+
+  const proxiedLogoUrl = logoUrl?.startsWith("http")
+    ? `/api/proxy-image?url=${encodeURIComponent(logoUrl)}`
+    : logoUrl || "/images/logo4.png";
+
   const content = (
     <div
       ref={isPreview ? undefined : cardRef}
@@ -89,7 +97,7 @@ export default function NewsPhotoCard({
         }}
       >
         <img
-          src={imageSrc}
+          src={proxiedImageSrc}
           alt="Background"
           crossOrigin="anonymous"
           style={{
@@ -145,7 +153,7 @@ export default function NewsPhotoCard({
           }}
         >
           <img
-            src={logoUrl || "/images/logo4.png"}
+            src={proxiedLogoUrl}
             alt="Jubotara News"
             crossOrigin="anonymous"
             style={{

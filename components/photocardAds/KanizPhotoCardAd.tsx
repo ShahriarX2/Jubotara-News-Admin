@@ -27,6 +27,7 @@ const KanizPhotoCardAd = () => {
           <img
             src="/images/kaniz-logo.png"
             alt="Logo"
+            crossOrigin="anonymous"
             style={{
               height: "75px",
               width: "auto",

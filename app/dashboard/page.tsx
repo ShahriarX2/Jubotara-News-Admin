@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { api, News, Category } from "../lib/api";
+import { api, News, Category } from "@/app/lib/api";
 import { Trash2, Edit, ImageDown, Link as LinkIcon } from "lucide-react";
 import Link from "next/link";
 import PhotoCardModal from "@/components/PhotoCardModal";

@@ -60,6 +60,7 @@ const PrimePhotoCardAd = () => {
           <img
             src="/images/prime-logo.png"
             alt="Logo"
+            crossOrigin="anonymous"
             style={{
               maxWidth: "100%",
               maxHeight: "100%",
