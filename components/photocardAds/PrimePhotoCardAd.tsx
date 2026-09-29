@@ -37,16 +37,19 @@ const PrimePhotoCardAd = () => {
           backgroundColor: "#8cc63f",
           display: "flex",
           alignItems: "center",
-          padding: "0 40px",
+          padding: "0 40px 0 165px",
           position: "relative",
-          gap: "25px",
         }}
       >
         {/* Logo Container */}
         <div
           style={{
-            height: "65px",
-            width: "65px",
+            position: "absolute",
+            left: "40px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            height: "100px",
+            width: "100px",
             backgroundColor: "#ffffff",
             borderRadius: "50%",
             padding: "5px",
@@ -82,7 +85,13 @@ const PrimePhotoCardAd = () => {
           >
             প্রাইম হাসপাতাল এন্ড ডায়াগনস্টিক সেন্টার
           </h2>
-          <div style={{ height: "2.5px", backgroundColor: "#ED1C24", width: "100%" }} />
+          <div
+            style={{
+              height: "2.5px",
+              backgroundColor: "#ED1C24",
+              width: "100%",
+            }}
+          />
           <p
             style={{
               fontSize: "18px",
@@ -96,14 +105,15 @@ const PrimePhotoCardAd = () => {
         </div>
 
         {/* Decorative corner */}
-        <div 
+        <div
           style={{
             position: "absolute",
             right: 0,
             top: 0,
             bottom: 0,
             width: "150px",
-            background: "linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.15) 50%)",
+            background:
+              "linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.15) 50%)",
             zIndex: 1,
           }}
         />

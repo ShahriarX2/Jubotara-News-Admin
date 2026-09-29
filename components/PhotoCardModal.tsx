@@ -26,7 +26,9 @@ export default function PhotoCardModal({
   const [centerTextFontSize, setCenterTextFontSize] = useState(28);
   const [accentColor, setAccentColor] = useState("#D9232D");
   const [imageScale, setImageScale] = useState(1);
-  const [adVariant, setAdVariant] = useState<"kaniz" | "prime" | "none">("none");
+  const [adVariant, setAdVariant] = useState<"bondhon" | "prime" | "none">(
+    "none",
+  );
   const [isDownloading, setIsDownloading] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -37,7 +39,8 @@ export default function PhotoCardModal({
       ? news.category
       : news.category?.name || "Uncategorized";
 
-  const dateSource = news.publishedAt || news.createdAt || new Date().toISOString();
+  const dateSource =
+    news.publishedAt || news.createdAt || new Date().toISOString();
   const date = new Date(dateSource).toLocaleDateString("bn-BD", {
     day: "numeric",
     month: "long",
@@ -129,11 +132,15 @@ export default function PhotoCardModal({
               </label>
               <select
                 value={adVariant}
-                onChange={(e) => setAdVariant(e.target.value as "kaniz" | "prime" | "none")}
+                onChange={(e) =>
+                  setAdVariant(e.target.value as "bondhon" | "prime" | "none")
+                }
                 className="w-full rounded-xl border-2 border-gray-200 p-3 text-lg font-medium text-gray-900 outline-none transition focus:border-blue-500"
               >
-                <option value="kaniz">Kaniz Hospital and Lab</option>
-                <option value="prime">Prime Hospital and Diagnostic Center</option>
+                <option value="bondhon">Bondhon</option>
+                <option value="prime">
+                  Prime Hospital and Diagnostic Center
+                </option>
                 <option value="none">None (No Ad)</option>
               </select>
             </div>
@@ -154,7 +161,9 @@ export default function PhotoCardModal({
                   max="100"
                   step="5"
                   value={headlineFontSize}
-                  onChange={(event) => setHeadlineFontSize(Number(event.target.value))}
+                  onChange={(event) =>
+                    setHeadlineFontSize(Number(event.target.value))
+                  }
                   className="h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-gray-200 accent-blue-600"
                 />
                 <button
@@ -185,7 +194,9 @@ export default function PhotoCardModal({
                       max="37"
                       step="1"
                       value={footerBarFontSize}
-                      onChange={(event) => setFooterBarFontSize(Number(event.target.value))}
+                      onChange={(event) =>
+                        setFooterBarFontSize(Number(event.target.value))
+                      }
                       className="h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-gray-200 accent-blue-600"
                     />
                     <button
@@ -214,7 +225,9 @@ export default function PhotoCardModal({
                       max="37"
                       step="1"
                       value={centerTextFontSize}
-                      onChange={(event) => setCenterTextFontSize(Number(event.target.value))}
+                      onChange={(event) =>
+                        setCenterTextFontSize(Number(event.target.value))
+                      }
                       className="h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-gray-200 accent-blue-600"
                     />
                     <button
@@ -263,7 +276,9 @@ export default function PhotoCardModal({
                       max="3"
                       step="0.01"
                       value={imageScale}
-                      onChange={(event) => setImageScale(Number(event.target.value))}
+                      onChange={(event) =>
+                        setImageScale(Number(event.target.value))
+                      }
                       className="h-2 flex-1 cursor-pointer appearance-none rounded-lg bg-gray-200 accent-blue-600"
                     />
                     <button
